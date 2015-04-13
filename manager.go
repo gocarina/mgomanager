@@ -26,7 +26,8 @@ func CreateManager(masterSession *mgo.Session, maxSessions int) *Manager {
 func (m *Manager) GetSession() (session *mgo.Session) {
 	select {
 	case session = <-m.sessionAvailable:
-		// We got a session, so we reuse one.
+		// We got a session, so we reuse it.
+		session.Refresh()
 	default:
 		// We create a new session from the master session.
 		session = m.masterSession.Copy()
@@ -36,7 +37,6 @@ func (m *Manager) GetSession() (session *mgo.Session) {
 
 // Recycle the session. If the pool is full, it discards it.
 func (m *Manager) Recycle(session *mgo.Session) {
-	session.Refresh()
 	select {
 	case m.sessionAvailable <- session:
 	// We put it in the session
